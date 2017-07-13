@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+    dependencies {
+        classpath 'com.badlogicgames.gdx:gdx-jnigen:1.9.6'
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+}
+
+apply plugin: "eclipse"
+
+version = '0.0.1-SNAPSHOT'
+ext {
+    gdxVersion = '1.9.6'
+    groupName = "net.mgsx.gdx"
+}
+
+apply plugin: "java"
+
+sourceCompatibility = 1.6
+sourceSets.main.java.srcDirs = [ "src/"]
+
+dependencies {
+    
+}
+
+import com.badlogic.gdx.jnigen.*
+
+
+task generateNativeCode(){
+	doLast{
+		def jnigen = new NativeCodeGenerator();
+		jnigen.generate("$projectDir/src", "$projectDir/bin", "$projectDir/jni"); //, (String[])["**/*.java"], (String[])[]);
+	}
+}		
+
+
+task generateBuildScripts(dependsOn: generateNativeCode){
+
+    doLast{
+    
+        def headerDirs = []
+        
+    
+        def linux64 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, true);
+        def linux32 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, false);    
+    
+        // Common flags (all platforms except android)
+        [linux64, linux32].each {
+            it.cFlags += " -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -O3 -DLIBPD_SETLOCALE";
+            it.libraries += " -lm -lpthread";
+            it.headerDirs += headerDirs
+        }
+
+        [linux64, linux32].each {
+            it.cFlags += " -DHAVE_LIBDL -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -fPIC";
+            it.libraries += " -shared -ldl -Wl,--as-needed -Bsymbolic -lxwiimote";
+        }
+
+        BuildConfig config = new BuildConfig("gdx-xwiimote", "target", "libs", "$projectDir/jni");
+        
+        new AntScriptGenerator().generate(config, linux64, linux32);
+        
+    }
+
+}
+
+// TODO require : sudo apt-get install libxwiimote-dev in order to link to runtime
+
+task buildLinux64(dependsOn: generateBuildScripts){
+    doLast{
+        BuildExecutor.executeAnt("$projectDir/jni/build-linux64.xml", "-v -Dhas-compiler=true clean postcompile");
+    }
+}
+
+task runLocal(dependsOn: [buildLinux64, classes], type: JavaExec) {
+    main = "net.mgsx.wiimote.Test"
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = projectDir
+    ignoreExitValue = true
+}

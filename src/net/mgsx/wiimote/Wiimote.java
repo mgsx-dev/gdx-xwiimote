@@ -150,7 +150,18 @@ public class Wiimote {
 		public boolean isKeyPressed(int key) {
 			return keys[key] != 0;
 		}
+		public void toggleMotor(boolean on){
+			Wiimote.iface_rumble(ptr, on);
+		}
+		public void toggleLed(int led, boolean on){
+			Wiimote.iface_set_led(ptr, led+1, on);
+		}
+		public boolean getLed(int led){
+			return Wiimote.iface_get_led(ptr, led+1);
+		}
 	}
+	
+	
 	
 	
 	public static void init(Application app){
@@ -255,7 +266,29 @@ public class Wiimote {
 	
 	*/
 	
+	static native void iface_rumble(long ptr, boolean on); /*
+		xwii_iface * iface = (xwii_iface *)ptr;
+		xwii_iface_rumble(iface, on);
+	*/
 	
+	static native void iface_set_led(long ptr, int led, boolean on); /*
+		xwii_iface * iface = (xwii_iface *)ptr;
+		int err = xwii_iface_set_led(iface, XWII_LED(led), on);
+		if(err != 0) {
+			print_error("cannot change led\n");
+		}
+	*/
+
+	static native boolean iface_get_led(long ptr, int led); /*
+		xwii_iface * iface = (xwii_iface *)ptr;
+		bool on = false;
+		int err = xwii_iface_get_led(iface, XWII_LED(led), &on);
+		if(err != 0) {
+			print_error("cannot read led\n");
+		}
+		return on;
+	*/
+
 	public static native double getAccelX(); /*
 		return accel_x;
 	*/
@@ -301,7 +334,7 @@ public class Wiimote {
 		should_poll = true;
 		
 		ret = xwii_iface_open(device,
-					      xwii_iface_available(device));// | XWII_IFACE_WRITABLE);
+					      xwii_iface_available(device) | XWII_IFACE_WRITABLE);
 					      
 		if (ret)
 		print_error("Error: Cannot open ifaces");

@@ -28,6 +28,7 @@ apply plugin: "java"
 
 sourceCompatibility = 1.6
 sourceSets.main.java.srcDirs = [ "src/"]
+sourceSets.test.java.srcDirs = [ "test/"]
 
 dependencies {
     
@@ -84,7 +85,7 @@ task buildLinux64(dependsOn: generateBuildScripts){
 
 task runLocal(dependsOn: [buildLinux64, classes], type: JavaExec) {
     main = "net.mgsx.wiimote.Test"
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.runtimeClasspath
     standardInput = System.in
     workingDir = projectDir
     ignoreExitValue = true

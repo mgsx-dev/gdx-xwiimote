@@ -1,8 +1,224 @@
 package net.mgsx.wiimote;
 
+import com.badlogic.gdx.Application;
+import com.badlogic.gdx.LifecycleListener;
+import com.badlogic.gdx.utils.Array;
+
 // see https://github.com/dvdhrm/xwiimote/blob/master/tools/xwiishow.c
 // to know how to access device !
 public class Wiimote {
+	
+	public static enum Keys {
+		XWII_KEY_LEFT,
+		XWII_KEY_RIGHT,
+		XWII_KEY_UP,
+		XWII_KEY_DOWN,
+		XWII_KEY_A,
+		XWII_KEY_B,
+		XWII_KEY_PLUS,
+		XWII_KEY_MINUS,
+		XWII_KEY_HOME,
+		XWII_KEY_ONE,
+		XWII_KEY_TWO,
+		XWII_KEY_X,
+		XWII_KEY_Y,
+		XWII_KEY_TL,
+		XWII_KEY_TR,
+		XWII_KEY_ZL,
+		XWII_KEY_ZR,
+
+		/**
+		 * Left thumb button
+		 *
+		 * This is reported if the left analog stick is pressed. Not all analog
+		 * sticks support this. The Wii-U Pro Controller is one of few devices
+		 * that report this event.
+		 */
+		XWII_KEY_THUMBL,
+
+		/**
+		 * Right thumb button
+		 *
+		 * This is reported if the right analog stick is pressed. Not all analog
+		 * sticks support this. The Wii-U Pro Controller is one of few devices
+		 * that report this event.
+		 */
+		XWII_KEY_THUMBR,
+
+		/**
+		 * Extra C button
+		 *
+		 * This button is not part of the standard action pad but reported by
+		 * extension controllers like the Nunchuk. It is supposed to extend the
+		 * standard A and B buttons.
+		 */
+		XWII_KEY_C,
+
+		/**
+		 * Extra Z button
+		 *
+		 * This button is not part of the standard action pad but reported by
+		 * extension controllers like the Nunchuk. It is supposed to extend the
+		 * standard X and Y buttons.
+		 */
+		XWII_KEY_Z,
+
+		/**
+		 * Guitar Strum-bar-up event
+		 *
+		 * Emitted by guitars if the strum-bar is moved up.
+		 */
+		XWII_KEY_STRUM_BAR_UP,
+
+		/**
+		 * Guitar Strum-bar-down event
+		 *
+		 * Emitted by guitars if the strum-bar is moved down.
+		 */
+		XWII_KEY_STRUM_BAR_DOWN,
+
+		/**
+		 * Guitar Fret-Far-Up event
+		 *
+		 * Emitted by guitars if the upper-most fret-bar is pressed.
+		 */
+		XWII_KEY_FRET_FAR_UP,
+
+		/**
+		 * Guitar Fret-Up event
+		 *
+		 * Emitted by guitars if the second-upper fret-bar is pressed.
+		 */
+		XWII_KEY_FRET_UP,
+
+		/**
+		 * Guitar Fret-Mid event
+		 *
+		 * Emitted by guitars if the mid fret-bar is pressed.
+		 */
+		XWII_KEY_FRET_MID,
+
+		/**
+		 * Guitar Fret-Low event
+		 *
+		 * Emitted by guitars if the second-lowest fret-bar is pressed.
+		 */
+		XWII_KEY_FRET_LOW,
+
+		/**
+		 * Guitar Fret-Far-Low event
+		 *
+		 * Emitted by guitars if the lower-most fret-bar is pressed.
+		 */
+		XWII_KEY_FRET_FAR_LOW,
+
+		/**
+		 * Number of key identifiers
+		 *
+		 * This defines the number of available key-identifiers. It is not
+		 * guaranteed to stay constant and may change when new identifiers are
+		 * added. However, it will never shrink.
+		 */
+		XWII_KEY_NUM
+	}
+	
+	public static class WiimoteDevice {
+		public String path;
+		public long ptr;
+		public String type;
+		public String extension;
+		public int caps;
+		public double ax;
+		
+		public int [] keys = new int[Keys.XWII_KEY_NUM.ordinal()];
+
+		public String getName() {
+			return type + " - " + extension;
+		}
+		
+		public void start(WiimoteDevice device){
+			ptr = createDevice(path);
+			Wiimote.start(ptr);
+		}
+		public void stop(WiimoteDevice device){
+			Wiimote.stop(ptr);
+		}
+
+		public boolean isKeyPressed(Keys key) {
+			return isKeyPressed(key.ordinal());
+		}
+		public boolean isKeyPressed(int key) {
+			return keys[key] != 0;
+		}
+	}
+	
+	
+	public static void init(Application app){
+		init();
+		app.addLifecycleListener(new LifecycleListener() {
+			
+			@Override
+			public void resume() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void pause() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void dispose() {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+	
+	public static void update(){
+		for(WiimoteDevice device : getConnectedDevices()) {
+			
+			device.ax = getAccelX();
+			for(int i=0 ; i<Keys.XWII_KEY_NUM.ordinal() ; i++){
+				device.keys[i] = getKey(i);
+			}
+			
+		}
+	}
+	
+	private static Array<WiimoteDevice> devices;
+	
+	public static Array<WiimoteDevice> getConnectedDevices(){
+		
+		if(devices == null) {
+			devices = new Array<WiimoteDevice>();
+			
+			long m = createMonitor();
+			for(;;){
+				String path = nextDevice(m);
+				if(path == null){
+					break;
+				}
+				WiimoteDevice device = new WiimoteDevice();
+				device.path = path;
+				device.ptr = createDevice(path);
+				device.type = getDevType(device.ptr);
+				device.extension = getExtension(device.ptr);
+				device.caps = available(device.ptr);
+				
+				releaseDevice(device.ptr);
+				device.ptr = 0;
+				
+				// device.caps = available(ptr);
+				devices.add(device);
+			}
+			releaseMonitor(m);
+		}
+		
+		return devices;
+	}
 	
 	public static interface Listener{
 		public void onKey(int key);
@@ -21,6 +237,8 @@ public class Wiimote {
 	
 	#define print_error printf
 	
+	#define MAX_DEVICE 4
+	
 	
 	static jclass eventCallbackClass;
 	static jmethodID eventCallbackMethodID; 
@@ -29,15 +247,50 @@ public class Wiimote {
 	
 	static double accel_x = 0;
 	
+	struct device_cache {
+		int keys[XWII_KEY_NUM];
+	};
+	
+	static device_cache  * device_caches;
+	
 	*/
+	
 	
 	public static native double getAccelX(); /*
 		return accel_x;
 	*/
 	
+	public static native String getDevType(long ptr); /*
+		xwii_iface * iface = (xwii_iface *)ptr;
+		char * devtype;
+		xwii_iface_get_devtype(iface, &devtype);
+		return env->NewStringUTF(devtype);
+	*/
+	
+	public static native String getExtension(long ptr); /*
+		xwii_iface * iface = (xwii_iface *)ptr;
+		char * extension;
+		xwii_iface_get_extension(iface, &extension);
+		return env->NewStringUTF(extension);
+	*/
+	
 	public static void onKey(int key, int state){
 		System.out.println("CALLBACK KEY : " + key + " | " + state);
 	}
+	
+	public static void start(final long ptr) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				pollDevice(ptr);
+			}
+		}).start();
+	}
+	
+	public static native int getKey(int code); /*
+		return device_caches->keys[code];
+	*/
+	
 	public static native void stop(long ptr); /*
 		should_poll = false;
 	*/
@@ -104,6 +357,7 @@ printf("prepare\n");
 					// TODO ... send accel
 					accel_x = event.v.abs[0].x;
 				}else if(event.type == XWII_EVENT_KEY){
+					device_caches[0].keys[event.v.key.code] = event.v.key.state;
 					env->CallStaticVoidMethod(eventCallbackClass, eventCallbackMethodID, event.v.key.code, event.v.key.state);
 				}
 			}
@@ -143,6 +397,10 @@ printf("prepare\n");
 	
 	
 	public static native void init (); /*
+	
+	device_caches = (device_cache*)malloc(MAX_DEVICE * sizeof(struct device_cache));
+	memset(device_caches, 0, MAX_DEVICE * sizeof(struct device_cache));
+	
 	
 	eventCallbackClass = env->FindClass("net/mgsx/wiimote/Wiimote");
 	// if (!eventCallbackClass) throw exception("Java class not found"); 

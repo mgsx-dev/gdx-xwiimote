@@ -1,11 +1,12 @@
 package net.mgsx.wiimote;
 
+import java.io.File;
 import java.io.IOException;
 
 public class Test {
 	private static boolean shouldRun = true;
 	public static void main(String[] args) {
-		System.load("/home/germain/git/gdx-xwiimote/libs/linux64/libgdx-xwiimote64.so");
+		System.load(new File("libs/linux64/libgdx-xwiimote64.so").getAbsolutePath());
 		Wiimote.init();
 		
 		long mon = Wiimote.createMonitor();

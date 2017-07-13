@@ -1,5 +1,7 @@
 package net.mgsx.wiimote;
 
+import java.io.File;
+
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.ApplicationListener;
@@ -19,7 +21,7 @@ public class WiimoteGUI extends ApplicationAdapter
 {
 	public static void main(String[] args) {
 		// TODO change this !
-		System.load("/home/germain/git/gdx-xwiimote/libs/linux64/libgdx-xwiimote64.so");
+		System.load(new File("libs/linux64/libgdx-xwiimote64.so").getAbsolutePath());
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.height = 1000;
 		LwjglApplicationConfiguration.disableAudio = true;

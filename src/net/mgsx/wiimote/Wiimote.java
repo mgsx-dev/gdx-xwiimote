@@ -385,13 +385,21 @@ printf("prepare\n");
 				}
 			} else {
 				// printf("dispatch\n");
-				
-				if(event.type == XWII_EVENT_ACCEL){
+				switch(event.type){
+				case XWII_EVENT_ACCEL:
 					// TODO ... send accel
 					accel_x = event.v.abs[0].x;
-				}else if(event.type == XWII_EVENT_KEY){
+					break;
+				case XWII_EVENT_KEY:
+				case XWII_EVENT_NUNCHUK_KEY:
+				case XWII_EVENT_PRO_CONTROLLER_KEY:
+				case XWII_EVENT_CLASSIC_CONTROLLER_KEY:
+				case XWII_EVENT_DRUMS_KEY:
+				case XWII_EVENT_GUITAR_KEY:
+					printf("key\n");
+					fflush(stdout);
 					device_caches[0].keys[event.v.key.code] = event.v.key.state;
-					env->CallStaticVoidMethod(eventCallbackClass, eventCallbackMethodID, event.v.key.code, event.v.key.state);
+					break;
 				}
 			}
 			

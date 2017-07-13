@@ -1,0 +1,9 @@
+/.gradle/
+/bin/
+/.project
+.classpath
+/.settings/
+/build/
+/jni/
+!jni/xwiimote.h
+/libs/

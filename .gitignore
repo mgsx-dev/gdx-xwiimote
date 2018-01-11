@@ -4,6 +4,6 @@
 .classpath
 /.settings/
 /build/
-/jni/
-!jni/xwiimote.h
+/jni/*
+!/jni/xwiimote.h
 /libs/

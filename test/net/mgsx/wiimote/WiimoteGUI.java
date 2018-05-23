@@ -42,7 +42,7 @@ public class WiimoteGUI extends ApplicationAdapter
 		Array<WiimoteDevice> devices = Wiimote.getConnectedDevices();
 		Table t = new Table(skin);
 		for(WiimoteDevice device : devices) {
-			device.start(device);
+			device.start();
 			t.add(new WiimoteDeviceGUI(skin, device));
 		}
 		t.setFillParent(true);

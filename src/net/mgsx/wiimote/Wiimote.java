@@ -136,11 +136,11 @@ public class Wiimote {
 			return type + " - " + extension;
 		}
 		
-		public void start(WiimoteDevice device){
+		public void start(){
 			ptr = createDevice(path);
 			Wiimote.start(ptr);
 		}
-		public void stop(WiimoteDevice device){
+		public void stop(){
 			Wiimote.stop(ptr);
 		}
 

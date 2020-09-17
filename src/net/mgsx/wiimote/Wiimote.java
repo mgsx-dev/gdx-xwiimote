@@ -131,6 +131,7 @@ public class Wiimote {
 		public double ax;
 		
 		public int [] keys = new int[Keys.XWII_KEY_NUM.ordinal()];
+		public boolean [] wasKeys = new boolean[Keys.XWII_KEY_NUM.ordinal()];
 
 		public String getName() {
 			return type + " - " + extension;
@@ -149,6 +150,12 @@ public class Wiimote {
 		}
 		public boolean isKeyPressed(int key) {
 			return keys[key] != 0;
+		}
+		public boolean isKeyJustPressed(Keys key) {
+			return isKeyJustPressed(key.ordinal());
+		}
+		public boolean isKeyJustPressed(int key) {
+			return keys[key] != 0 && !wasKeys[key];
 		}
 		public void toggleMotor(boolean on){
 			Wiimote.iface_rumble(ptr, on);
@@ -193,6 +200,7 @@ public class Wiimote {
 			
 			device.ax = getAccelX();
 			for(int i=0 ; i<Keys.XWII_KEY_NUM.ordinal() ; i++){
+				device.wasKeys[i] = device.keys[i] != 0;
 				device.keys[i] = getKey(i);
 			}
 			
